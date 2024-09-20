@@ -19,7 +19,7 @@ dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
 table = dynamodb.Table('ChatMessages')
 
 # Hardcoded admin ID
-adminid = 'c0f25c6d-8fb5-4e16-939f-f5d0a5e1a966'
+adminid = 'b566b8ee-ecdc-4956-a757-6296bc0614ef'
 
 # State variables
 # Note: In a production environment, you'd want to use a database or cache for these
@@ -41,7 +41,7 @@ def strip_html_tags(text: str) -> str:
 
 def get_ai_response(user_message: str) -> Optional[str]:
     try:
-        conn = http.client.HTTPSConnection("http://54.161.37.146")
+        conn = http.client.HTTPConnection("54.161.37.146")
         payload = json.dumps({
             "user_message": user_message,
             "conversation_history": []  # Empty history for now
@@ -182,7 +182,7 @@ def send_direct_message(to_user: str, from_user: str, text: str) -> Optional[str
             "text": format_text(text)
         })
         headers = {
-            'authorization': 'Bearer hb:8d3bdd6fe027d6add8b292940a9724f775ead140132c1ddb77',
+            'authorization': 'Bearer hb:6472bf208fe2f6c71746acdb96b35fe6877d84c8e4a6c78365',
             'content-type': 'application/json'
         }
         conn.request("PUT", "/v0/directMessages", payload, headers)
@@ -203,7 +203,7 @@ def get_recent_messages(chat_id: str) -> list:
     try:
         conn = http.client.HTTPSConnection("api.heartbeat.chat")
         headers = {
-            'authorization': 'Bearer hb:8d3bdd6fe027d6add8b292940a9724f775ead140132c1ddb77',
+            'authorization': 'Bearer hb:6472bf208fe2f6c71746acdb96b35fe6877d84c8e4a6c78365',
             'accept': 'application/json'
         }
         conn.request("GET", f"/v0/directMessages/{chat_id}", headers=headers)
@@ -229,7 +229,7 @@ def create_channel_category(name: str) -> Optional[str]:
             "name": name
         })
         headers = {
-            'authorization': 'Bearer hb:8d3bdd6fe027d6add8b292940a9724f775ead140132c1ddb77',
+            'authorization': 'Bearer hb:6472bf208fe2f6c71746acdb96b35fe6877d84c8e4a6c78365',
             'content-type': 'application/json'
         }
         conn.request("PUT", "/v0/channelCategories", payload, headers)
@@ -260,7 +260,7 @@ def create_chat_channel(channel_category_id: str, user_email: str, sender_user_i
             "channelType": "CHAT"
         })
         headers = {
-            'authorization': 'Bearer hb:8d3bdd6fe027d6add8b292940a9724f775ead140132c1ddb77',
+            'authorization': 'Bearer hb:6472bf208fe2f6c71746acdb96b35fe6877d84c8e4a6c78365',
             'content-type': 'application/json'
         }
         conn.request("PUT", "/v0/channels", payload, headers)
