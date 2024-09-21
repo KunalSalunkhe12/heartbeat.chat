@@ -129,8 +129,6 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
         print(f"Chat ID: {chat_id}, Message ID: {chat_message_id}")
 
         user_email = get_user_from_id(sender_user_id).get('email')
-        print(user_email)
-
         recent_messages = get_recent_messages(chat_id)
 
         if recent_messages and 'content' in recent_messages[-1]:
@@ -141,12 +139,11 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
             store_message_in_dynamodb(chat_id, chat_message_id, clean_message_content, sender_user_id)
 
             if clean_message_content == "i want to get matched":
+                send_direct_message(sender_user_id, adminid, "Finding a match for you... May take a few seconds.")
                 res = matchMakingAlgorithm.run_matchmaking_algorithm(sender_user_id, tableProfile)
-                print(f"Matchmaking algorithm response: {res}")
-                response_text = "You've been matched to Tony Stark! Check your matches."
-                send_direct_message(sender_user_id, adminid, response_text)
 
-                # store_message_in_dynamodb(chat_id, generate_message_id(), response_text, adminid)
+                matched_user_id = res.get('top_match')
+                print(f"Matched user ID: {matched_user_id}")
                                 
                 channel_category_id = check_if_channel_category_exists("Matches")
 
@@ -155,7 +152,7 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
                     channel_category_id = create_channel_category("Matches")
 
                 if channel_category_id:
-                    create_chat_channel(channel_category_id, user_email, sender_user_id)
+                    create_chat_channel(channel_category_id, sender_user_id, adminid)
                     print(f"Match channel created for user {sender_user_id} in category {channel_category_id}.")
                 else:
                     print("Failed to create channel category for matches.")
@@ -170,92 +167,56 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
 
                 return True
             else:
-
                 print("Failed to get AI response, falling back to default behavior")
 
-
         if awaiting_email:
-
             if recent_messages and 'content' in recent_messages[-1]:
-
                 latest_message_content = recent_messages[-1]['content'].strip().lower()
-
                 clean_message_content = strip_html_tags(latest_message_content)
 
                 print(f"Latest message content (cleaned): {clean_message_content}")
 
-
                 if "@" in clean_message_content:
-
                     user_email = clean_message_content
 
                     print(f"User email captured: {user_email}")
-
-
                     channel_category_id = create_channel_category(f"Matches for {user_email}")
 
                     print(f"Channel category created with ID: {channel_category_id}")
-
-
                     response_text = "Do you want to chat with the match?"
-
                     send_direct_message(sender_user_id, adminid, response_text)
-
                     store_message_in_dynamodb(chat_id, generate_message_id(), response_text, adminid)
-
-
                     awaiting_chat_confirmation = True
-
                     awaiting_email = False
-
                     return True
                 else:
-
                     print("Invalid email format. Awaiting correct email.")
-
                     response_text = "Please provide a valid email."
-
                     send_direct_message(sender_user_id, adminid, response_text)
-
                     store_message_in_dynamodb(chat_id, generate_message_id(), response_text, adminid)
-
                     return True
 
 
         if awaiting_chat_confirmation:
-
             if recent_messages and 'content' in recent_messages[-1]:
-
                 latest_message_content = recent_messages[-1]['content'].strip().lower()
-
                 clean_message_content = strip_html_tags(latest_message_content)
 
                 print(f"Latest message content (cleaned): {clean_message_content}")
 
-
                 if clean_message_content == "yes":
-
                     create_chat_channel(channel_category_id, user_email, sender_user_id)
 
                     response_text = "Chat channel created!"
-
                     send_direct_message(sender_user_id, adminid, response_text)
-
                     store_message_in_dynamodb(chat_id, generate_message_id(), response_text, adminid)
-
                     awaiting_chat_confirmation = False
-
                     return True
                 else:
-
                     response_text = "Okay, let me know if you change your mind."
-
                     send_direct_message(sender_user_id, adminid, response_text)
-
                     store_message_in_dynamodb(chat_id, generate_message_id(), response_text, adminid)
-
                     awaiting_chat_confirmation = False
-
                     return True
 
         default_message = 'I am a matchmaker. Give me information about you so I can match you. If you want to get matched, say: I want to get matched.'
@@ -264,83 +225,52 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
 
         return True
 
-
     except Exception as e:
-
         print(f"Error processing direct message: {e}")
-
         return False
 
 
 def store_message_in_dynamodb(chat_id: str, message_id: str, message_content: str, sender_user_id: str):
-
     try:
-
         tableChat.put_item(
-
             Item={
-
                 'ChatID': chat_id,
-
                 'MessageID': message_id,
-
                 'MessageContent': message_content,
-
                 'SenderUserID': sender_user_id
-
             }
         )
-
         print(f"Stored message in DynamoDB: ChatID={chat_id}, MessageID={message_id}, SenderUserID={sender_user_id}")
-
     except Exception as e:
-
         print(f"Error storing message in DynamoDB: {e}")
 
 
 def store_user_profile_in_dynamodb(user_id: str, user_profile: dict):
-
     try:
         tableProfile.put_item(
-
             Item={
                 'UserID': user_id,
                 'UserProfile': user_profile
             }
         )
-
         print(f"Stored user profile in DynamoDB: UserID={user_id}")
-
     except Exception as e:
-
         print(f"Error storing user profile in DynamoDB: {e}")
 
 
 
 def send_direct_message(to_user: str, from_user: str, text: str) -> Optional[str]:
-
     try:
-
         print(f"Sending message from {from_user} to {to_user}")
-
         conn = http.client.HTTPSConnection("api.heartbeat.chat")
-
         payload = json.dumps({
-
             "from": from_user,
-
             "to": to_user,
-
             "text": format_text(text)
-
         })
-
         headers = {
-
             'authorization': 'Bearer hb:76bffd9b05b2539c4d9d0960e825d2dd34bcaba31c32e0058e',
-
             'content-type': 'application/json'
-
         }
 
         conn.request("PUT", "/v0/directMessages", payload, headers)
@@ -349,18 +279,13 @@ def send_direct_message(to_user: str, from_user: str, text: str) -> Optional[str
 
         return data.decode("utf-8")
 
-
     except Exception as e:
-
         print(f"Error sending direct message: {e}")
-
         return None
 
 
 def format_text(text: str) -> str:
-
     return "<p>" + text + "</p>"
-
 
 def get_recent_messages(chat_id: str) -> list:
 
@@ -414,17 +339,20 @@ def create_channel_category(name: str) -> Optional[str]:
         return None
 
 
-def create_chat_channel(channel_category_id: str, user_email: str, sender_user_id: str) -> Optional[str]:
+def create_chat_channel(channel_category_id: str, sender_user_id: str) -> Optional[str]:
     try:
+        user_email = get_user_from_id(sender_user_id).get('email')
+        admin_email = get_user_from_id(adminid).get('email')
+
         conn = http.client.HTTPSConnection("api.heartbeat.chat")
         payload = json.dumps({
             "isPrivate": True,
             "channelCategoryID": channel_category_id,
-            "name": "Chat with Tony Stark",
+            "name": "Chat with Fony Stark",
             "description": "A private channel for your match.",
             "invitedUsers": [
                 user_email,
-                "salunkhekunal594@gmail.com",
+                admin_email
             ],
             "channelType": "CHAT"
         })

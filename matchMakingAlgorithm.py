@@ -114,8 +114,10 @@ def run_matchmaking_algorithm(user_id: str, tableProfile: any):
             compatibility_score += attribute_score * weight
 
         compatibility_scores[other_user['UserID']] = compatibility_score
+        top_match = sorted(compatibility_scores.items(), key=lambda x: x[1], reverse=True)[0]
 
     return {
         "user": user,
-        "compatibility_scores": compatibility_scores
+        "compatibility_scores": compatibility_scores,
+        "top_match": top_match
     }
