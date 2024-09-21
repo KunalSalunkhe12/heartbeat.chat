@@ -1,6 +1,5 @@
 import json
 from itertools import combinations
-import matchmakingAlgoResources
 import openai
 import os
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
