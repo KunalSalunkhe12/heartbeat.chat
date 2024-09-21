@@ -355,7 +355,7 @@ def create_chat_channel(channel_category_id: str, sender_user_id: str, matched_u
         payload = json.dumps({
             "isPrivate": True,
             "channelCategoryID": channel_category_id,
-            "name": f"Chat with {matched_user_name}",
+            "name": f"{matched_user_name} ❤️ {user_email}",
             "description": "A private channel for your match.",
             "invitedUsers": [
                 user_email,
