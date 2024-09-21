@@ -39,6 +39,26 @@ def is_admin(user_id: str) -> bool:
 def strip_html_tags(text: str) -> str:
     return re.sub(r'<[^>]+>', '', text)
 
+def get_user_from_id(user_id: str) -> Optional[str]:
+    try:
+        conn = http.client.HTTPSConnection("api.heartbeat.chat")
+        headers = {
+            'authorization': 'Bearer hb:6472bf208fe2f6c71746acdb96b35fe6877d84c8e4a6c78365',
+            'content-type': 'application/json'
+        }
+        conn.request("GET", f"/v0/users/{user_id}", headers=headers)
+        res = conn.getresponse()
+        data = res.read()
+
+        print(f"Get user response: {data.decode('utf-8')}")
+        user = json.loads(data.decode("utf-8"))
+        return user
+
+    except Exception as e:
+        print(f"Error fetching user: {e}")
+        return None
+
+
 def get_ai_response(user_message: str) -> Optional[str]:
     try:
         conn = http.client.HTTPConnection("54.161.37.146")
@@ -69,6 +89,9 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
     try:
         print(f"Processing message from {sender_user_id} to {receiver_user_id}")
         print(f"Chat ID: {chat_id}, Message ID: {chat_message_id}")
+
+        user_email = get_user_from_id(sender_user_id).get('email')
+        print(user_email)
 
         recent_messages = get_recent_messages(chat_id)
         print(f"Recent messages: {recent_messages}")
