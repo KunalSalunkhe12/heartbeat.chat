@@ -142,7 +142,7 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
                 send_direct_message(sender_user_id, adminid, "Finding a match for you... May take a few seconds.")
                 res = matchMakingAlgorithm.run_matchmaking_algorithm(sender_user_id, tableProfile)
 
-                matched_user_id = res.get('top_match')
+                matched_user_id = res.get('top_match')[0]
                 print(f"Matched user ID: {matched_user_id}")
                                 
                 channel_category_id = check_if_channel_category_exists("Matches")
@@ -152,7 +152,7 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
                     channel_category_id = create_channel_category("Matches")
 
                 if channel_category_id:
-                    create_chat_channel(channel_category_id, sender_user_id)
+                    create_chat_channel(channel_category_id, sender_user_id, matched_user_id)
                     print(f"Match channel created for user {sender_user_id} in category {channel_category_id}.")
                 else:
                     print("Failed to create channel category for matches.")
@@ -339,10 +339,11 @@ def create_channel_category(name: str) -> Optional[str]:
         return None
 
 
-def create_chat_channel(channel_category_id: str, sender_user_id: str) -> Optional[str]:
+def create_chat_channel(channel_category_id: str, sender_user_id: str, matched_user_id: str) -> Optional[str]:
     try:
         user_email = get_user_from_id(sender_user_id).get('email')
         admin_email = get_user_from_id(adminid).get('email')
+        matched_user_email = get_user_from_id(matched_user_id).get('email')
 
         conn = http.client.HTTPSConnection("api.heartbeat.chat")
         payload = json.dumps({
@@ -352,7 +353,8 @@ def create_chat_channel(channel_category_id: str, sender_user_id: str) -> Option
             "description": "A private channel for your match.",
             "invitedUsers": [
                 user_email,
-                admin_email
+                admin_email,
+                matched_user_email
             ],
             "channelType": "CHAT"
         })
