@@ -346,16 +346,17 @@ def create_chat_channel(channel_category_id: str, sender_user_id: str, matched_u
     try:
         user_email = get_user_from_id(sender_user_id).get('email')
         admin_email = get_user_from_id(adminid).get('email')
-
         matched_user_email = get_user_from_id(matched_user_id).get('email')
+
         matched_user_name = get_user_from_id(matched_user_id).get('name')
+        user_name = get_user_from_id(sender_user_id).get('name')
 
 
         conn = http.client.HTTPSConnection("api.heartbeat.chat")
         payload = json.dumps({
             "isPrivate": True,
             "channelCategoryID": channel_category_id,
-            "name": f"{matched_user_name} ❤️ {user_email}",
+            "name": f"{matched_user_name} ❤️ {user_name}",
             "description": "A private channel for your match.",
             "invitedUsers": [
                 user_email,
