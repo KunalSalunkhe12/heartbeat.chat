@@ -102,7 +102,7 @@ def get_user_from_id(user_id: str) -> Optional[str]:
 
 
 
-def get_ai_response(user_message: str, conversation_history: list) -> Optional[str]:
+def get_ai_response(user_message: str) -> Optional[str]:
 
     print("Conversation history: ", conversation_history)
 
@@ -168,7 +168,7 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
                 
                 return True
             
-            ai_response = get_ai_response(clean_message_content, recent_messages)
+            ai_response = get_ai_response(clean_message_content)
             if ai_response:
                 send_direct_message(sender_user_id, adminid, ai_response['assistant_response'])
                 store_message_in_dynamodb(chat_id, generate_message_id(), ai_response, adminid)
