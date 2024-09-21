@@ -2,26 +2,25 @@ import json
 from itertools import combinations
 import openai
 import os
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 openai.api_key = OPENAI_API_KEY
 
-
 def call_openai_assistant(json_schema, all_messages):
-        # Make the API call with the new interface
-        response = openai.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=all_messages,
-            response_format={
-                "type": "json_schema",
-                "json_schema": json_schema
-            }
-        )
+    # Make the API call with the new interface
+    response = openai.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=all_messages,
+        response_format={
+            "type": "json_schema",
+            "json_schema": json_schema
+        }
+    )
 
-        assistant_response = response.choices[0].message.content
+    assistant_response = response.choices[0].message.content
 
-        # Return the response
-        return assistant_response
+    # Return the response
+    return assistant_response
 
 def get_user_profile(user_id: str, tableProfile):
     try:
@@ -30,7 +29,7 @@ def get_user_profile(user_id: str, tableProfile):
                 'UserID': user_id
             }
         )
-        return response
+        return response.get('Item')
     except Exception as e:
         print(f"Error fetching user profile: {e}")
         return None
@@ -44,8 +43,6 @@ def get_all_user_profiles(tableProfile):
         return None
 
 def run_matchmaking_algorithm(user_id: str, tableProfile: any):
-    # Initialize OpenAI API with the provided API key
-
     # Matchmaking Algorithm
     json_schema = {
         "name": "matchmaking_score",
@@ -88,42 +85,37 @@ def run_matchmaking_algorithm(user_id: str, tableProfile: any):
 
     user = get_user_profile(user_id, tableProfile)
     all_users = get_all_user_profiles(tableProfile)
-    # # Sample data
-    # sample_data = {
-    #     "user_id_3628": matchmakingAlgoResources.sample_user_profile_1,
-    #     "user_id_1820": matchmakingAlgoResources.sample_user_profile_2,
-    # }
 
-    # # Get all possible pairs of user IDs
-    # user_pairs = list(combinations(sample_data.keys(), 2))
-    # compatibility_score_for_all_users = {}
+    if not user or not all_users:
+        return {"error": "Failed to fetch user profiles"}
 
-    # for user_pair in user_pairs:
-    #     # Extract the actual user profiles using the keys
-    #     user_profile_1 = sample_data[user_pair[0]]["user_profile"]
-    #     user_profile_2 = sample_data[user_pair[1]]["user_profile"]
+    compatibility_scores = {}
 
-    #     compatibility_score = 0
-    #     # For each possible pair of users, compare their attributes
-    #     for attribute in user_profile_1:
-    #         # Serialize the content dictionary to a JSON string
-    #         content_dict = {
-    #             "Person 1": user_profile_1[attribute],
-    #             "Person 2": user_profile_2[attribute]
-    #         }
+    for other_user in all_users:
+        if other_user['UserID'] == user_id:
+            continue  # Skip comparing with self
 
-    #         all_messages.append({
-    #             "role": "user",
-    #             "content": json.dumps(content_dict)  # Convert content to a JSON string
-    #         })
+        compatibility_score = 0
+        for attribute, weight in weights.items():
+            content_dict = {
+                "Person 1": user.get(attribute, "Not specified"),
+                "Person 2": other_user.get(attribute, "Not specified")
+            }
 
-    #         # Make the assistant API call
-    #         assistant_response = call_openai_assistant(json_schema, all_messages)
-    #         attribute_score = json.loads(assistant_response)["compatibility_score"]
-    #         print(attribute + " score is = " + str(attribute_score))
-        
-    #         compatibility_score += attribute_score * weights[attribute]
+            all_messages.append({
+                "role": "user",
+                "content": json.dumps(content_dict)
+            })
 
-    #     compatibility_score_for_all_users[user_pair] = compatibility_score
+            assistant_response = call_openai_assistant(json_schema, all_messages)
+            attribute_score = json.loads(assistant_response)["compatibility_score"]
+            print(f"{attribute} score for {user_id} and {other_user['UserID']} is = {attribute_score}")
 
-    return {"user": user, "all_users": all_users}
+            compatibility_score += attribute_score * weight
+
+        compatibility_scores[other_user['UserID']] = compatibility_score
+
+    return {
+        "user": user,
+        "compatibility_scores": compatibility_scores
+    }
