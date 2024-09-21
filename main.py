@@ -155,7 +155,7 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
                     channel_category_id = create_channel_category("Matches")
 
                 if channel_category_id:
-                    create_chat_channel(channel_category_id, sender_user_id, matched_user_id)
+                    create_chat_channel(channel_category_id, sender_user_id, matched_user_id, adminid)
                     print(f"Match channel created for user {sender_user_id} in category {channel_category_id}.")
                 else:
                     print("Failed to create channel category for matches.")
@@ -342,7 +342,7 @@ def create_channel_category(name: str) -> Optional[str]:
         return None
 
 
-def create_chat_channel(channel_category_id: str, sender_user_id: str, matched_user_id: str) -> Optional[str]:
+def create_chat_channel(channel_category_id: str, sender_user_id: str, matched_user_id: str, adminid: str) -> Optional[str]:
     try:
         user_email = get_user_from_id(sender_user_id).get('email')
         admin_email = get_user_from_id(adminid).get('email')
