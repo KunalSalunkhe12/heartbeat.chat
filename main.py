@@ -1,28 +1,22 @@
 import json
 import re
-
 import http.client
-
 import boto3
-
 from boto3.dynamodb.conditions import Key
-
 from fastapi import FastAPI, HTTPException, Request
-
 from pydantic import BaseModel
 
 from typing import Optional
 import uuid
 import os
+import matchMakingAlgorithm
 
 
 app = FastAPI()
 
 
 AWS_REGION = "us-east-1"  # Replace with your preferred AWS region
-
 os.environ['AWS_DEFAULT_REGION'] = AWS_REGION
-
 
 # Initialize DynamoDB client
 
@@ -31,24 +25,17 @@ dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
 tableChat = dynamodb.Table('ChatMessages')
 tableProfile = dynamodb.Table('UserProfiles')
 
-
 # Hardcoded admin ID
 
 adminid = 'b566b8ee-ecdc-4956-a757-6296bc0614ef'
 
 
 # State variables
-
 # Note: In a production environment, you'd want to use a database or cache for these
-
 awaiting_email = False
-
 awaiting_chat_confirmation = False
-
 user_email = None
-
 channel_category_id = None
-
 
 class MessageRequest(BaseModel):
 
@@ -154,9 +141,12 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
             store_message_in_dynamodb(chat_id, chat_message_id, clean_message_content, sender_user_id)
 
             if clean_message_content == "i want to get matched":
+                res = matchMakingAlgorithm.run_matchmaking_algorithm(sender_user_id, tableProfile)
+                print(f"Matchmaking algorithm response: {res}")
                 response_text = "You've been matched to Tony Stark! Check your matches."
                 send_direct_message(sender_user_id, adminid, response_text)
-                store_message_in_dynamodb(chat_id, generate_message_id(), response_text, adminid)
+
+                # store_message_in_dynamodb(chat_id, generate_message_id(), response_text, adminid)
                 
                 channel_category_id = create_channel_category("Matches")
 
@@ -501,11 +491,8 @@ async def process_message(message: MessageRequest):
 
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @app.get("/")
-
 async def root():
-
     return {"message": "Hello World"}
 
 
