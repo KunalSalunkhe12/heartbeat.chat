@@ -104,11 +104,13 @@ def get_user_from_id(user_id: str) -> Optional[str]:
 
 def get_ai_response(user_message: str, conversation_history: list) -> Optional[str]:
 
+    print("Conversation history: ", conversation_history)
+
     try:
         conn = http.client.HTTPConnection("54.161.37.146")
         payload = json.dumps({
             "user_message": user_message,
-            "conversation_history": conversation_history  # Empty history for now
+            "conversation_history": []  # Empty history for now
         })
 
         headers = {
@@ -262,11 +264,8 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
 
                     return True
 
-
         default_message = 'I am a matchmaker. Give me information about you so I can match you. If you want to get matched, say: I want to get matched.'
-
         send_direct_message(sender_user_id, adminid, default_message)
-
         store_message_in_dynamodb(chat_id, generate_message_id(), default_message, adminid)
 
         return True
