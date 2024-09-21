@@ -105,45 +105,29 @@ def get_user_from_id(user_id: str) -> Optional[str]:
 def get_ai_response(user_message: str) -> Optional[str]:
 
     try:
-
         conn = http.client.HTTPConnection("54.161.37.146")
-
         payload = json.dumps({
-
             "user_message": user_message,
-
             "conversation_history": []  # Empty history for now
-
         })
 
         headers = {
-
             'Content-Type': 'application/json'
-
         }
 
         conn.request("POST", "/chat/", payload, headers)
-
         res = conn.getresponse()
-
         data = res.read()
         
-
         if res.status == 200:
-
             response_json = json.loads(data.decode("utf-8"))
-
             return response_json
         else:
-
             print(f"Error calling AI matchmaker: HTTP {res.status}, Response: {data.decode('utf-8')}")
-
             return None
 
     except Exception as e:
-
         print(f"Error calling AI matchmaker: {e}")
-
         return None
 
 
@@ -151,63 +135,42 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
 
     global awaiting_email, awaiting_chat_confirmation, user_email, channel_category_id
 
-
     try:
-
         print(f"Processing message from {sender_user_id} to {receiver_user_id}")
-
         print(f"Chat ID: {chat_id}, Message ID: {chat_message_id}")
-
 
         user_email = get_user_from_id(sender_user_id).get('email')
         print(user_email)
 
-
         recent_messages = get_recent_messages(chat_id)
 
-
-
         if recent_messages and 'content' in recent_messages[-1]:
-
             latest_message_content = recent_messages[-1]['content'].strip().lower()
-
             clean_message_content = strip_html_tags(latest_message_content)
-
             print(f"Latest message content (cleaned): {clean_message_content}")
-
 
             store_message_in_dynamodb(chat_id, chat_message_id, clean_message_content, sender_user_id)
 
-
             if clean_message_content == "i want to get matched":
-
                 response_text = "You've been matched to Tony Stark! Check your matches."
-
                 send_direct_message(sender_user_id, adminid, response_text)
-
                 store_message_in_dynamodb(chat_id, generate_message_id(), response_text, adminid)
-
-
+                
                 channel_category_id = create_channel_category("Matches")
 
                 if channel_category_id:
-
                     create_chat_channel(channel_category_id, user_email, sender_user_id)
-
                     print(f"Match channel created for user {sender_user_id} in category {channel_category_id}.")
                 else:
-
                     print("Failed to create channel category for matches.")
                 
-
                 return True
             
-
-            ai_response = get_ai_response(clean_message_content).get('assistant_response')
+            ai_response = get_ai_response(clean_message_content)
             if ai_response:
-                send_direct_message(sender_user_id, adminid, ai_response)
+                send_direct_message(sender_user_id, adminid, ai_response['assistant_response'])
                 store_message_in_dynamodb(chat_id, generate_message_id(), ai_response, adminid)
-                store_user_profile_in_dynamodb(sender_user_id, ai_response.get('user_profile'))
+                store_user_profile_in_dynamodb(sender_user_id, ai_response['user_profile'])
 
                 return True
             else:
