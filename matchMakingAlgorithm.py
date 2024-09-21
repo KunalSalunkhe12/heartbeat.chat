@@ -23,7 +23,7 @@ def call_openai_assistant(json_schema, all_messages):
         # Return the response
         return assistant_response
 
-def get_user_profile(user_id: str, tableProfile) -> Optional[dict]:
+def get_user_profile(user_id: str, tableProfile):
     try:
         response = tableProfile.get_item(
             Key={
@@ -35,7 +35,7 @@ def get_user_profile(user_id: str, tableProfile) -> Optional[dict]:
         print(f"Error fetching user profile: {e}")
         return None
 
-def get_all_user_profiles(tableProfile) -> Optional[List[dict]]:
+def get_all_user_profiles(tableProfile):
     try:
         response = tableProfile.scan()
         return response["Items"]
