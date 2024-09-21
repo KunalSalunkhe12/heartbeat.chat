@@ -144,6 +144,9 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
 
                 matched_user_id = res.get('top_match')[0]
                 print(f"Matched user ID: {matched_user_id}")
+                if not matched_user_id:
+                    send_direct_message(sender_user_id, adminid, "No matches found. Please try again later.🥺")
+                    return True
                                 
                 channel_category_id = check_if_channel_category_exists("Matches")
 
@@ -343,13 +346,16 @@ def create_chat_channel(channel_category_id: str, sender_user_id: str, matched_u
     try:
         user_email = get_user_from_id(sender_user_id).get('email')
         admin_email = get_user_from_id(adminid).get('email')
+
         matched_user_email = get_user_from_id(matched_user_id).get('email')
+        matched_user_name = get_user_from_id(matched_user_id).get('name')
+
 
         conn = http.client.HTTPSConnection("api.heartbeat.chat")
         payload = json.dumps({
             "isPrivate": True,
             "channelCategoryID": channel_category_id,
-            "name": "Chat with Fony Stark",
+            "name": f"Chat with {matched_user_name}",
             "description": "A private channel for your match.",
             "invitedUsers": [
                 user_email,
