@@ -90,8 +90,6 @@ def get_user_from_id(user_id: str) -> Optional[str]:
         data = res.read()
 
 
-        print(f"Get user response: {data.decode('utf-8')}")
-
         user = json.loads(data.decode("utf-8"))
         return user
 
@@ -167,7 +165,6 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
 
         recent_messages = get_recent_messages(chat_id)
 
-        print(f"Recent messages: {recent_messages}")
 
 
         if recent_messages and 'content' in recent_messages[-1]:
@@ -208,11 +205,8 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
 
             ai_response = get_ai_response(clean_message_content).get('assistant_response')
             if ai_response:
-
                 send_direct_message(sender_user_id, adminid, ai_response)
-
                 store_message_in_dynamodb(chat_id, generate_message_id(), ai_response, adminid)
-
                 store_user_profile_in_dynamodb(sender_user_id, ai_response.get('user_profile'))
 
                 return True
@@ -394,13 +388,8 @@ def send_direct_message(to_user: str, from_user: str, text: str) -> Optional[str
         }
 
         conn.request("PUT", "/v0/directMessages", payload, headers)
-
         res = conn.getresponse()
-
         data = res.read()
-
-
-        print(f"Send direct message response: {data.decode('utf-8')}")
 
         return data.decode("utf-8")
 
@@ -437,8 +426,6 @@ def get_recent_messages(chat_id: str) -> list:
 
         data = res.read()
 
-
-        print(f"Get recent messages response: {data.decode('utf-8')}")
 
         messages = json.loads(data.decode("utf-8"))
 
@@ -505,53 +492,33 @@ def create_chat_channel(channel_category_id: str, user_email: str, sender_user_i
         conn = http.client.HTTPSConnection("api.heartbeat.chat")
 
         payload = json.dumps({
-
             "isPrivate": True,
-
             "channelCategoryID": channel_category_id,
-
             "name": "Chat with Tony Stark",
-
             "description": "A private channel for your match.",
-
             "invitedUsers": [
-
                 user_email,
-
                 "salunkhekunal594@gmail.com",
-
-                "contact@lumiopartners.com"
-
             ],
-
             "channelType": "CHAT"
-
         })
 
         headers = {
-
             'authorization': 'Bearer hb:6472bf208fe2f6c71746acdb96b35fe6877d84c8e4a6c78365',
-
             'content-type': 'application/json'
-
         }
 
         conn.request("PUT", "/v0/channels", payload, headers)
-
         res = conn.getresponse()
-
         data = res.read()
 
 
         print(f"Create chat channel response: {data.decode('utf-8')}")
-
         return data.decode("utf-8")
 
 
     except Exception as e:
-
         print(f"Error creating chat channel: {e}")
-
         return None
 
 
