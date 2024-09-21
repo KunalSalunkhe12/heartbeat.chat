@@ -87,7 +87,7 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
 
                 channel_category_id = create_channel_category("Matches")
                 if channel_category_id:
-                    create_chat_channel(channel_category_id, "ananth@lumiopartners.com", sender_user_id)
+                    create_chat_channel(channel_category_id,"salunkhekunal594@gmail.com", sender_user_id)
                     print(f"Match channel created for user {sender_user_id} in category {channel_category_id}.")
                 else:
                     print("Failed to create channel category for matches.")
