@@ -27,7 +27,7 @@ tableProfile = dynamodb.Table('UserProfiles')
 
 # Hardcoded admin ID
 
-adminid = 'b566b8ee-ecdc-4956-a757-6296bc0614ef'
+adminid = 'ef5490d5-e978-4d3e-9596-ba0f667b698e'
 
 
 # State variables
@@ -40,68 +40,70 @@ channel_category_id = None
 class MessageRequest(BaseModel):
 
     senderUserID: str
-
     chatID: str
-
     chatMessageID: str
 
-
 def is_admin(user_id: str) -> bool:
-
     return user_id == adminid
 
 
 def strip_html_tags(text: str) -> str:
-
     return re.sub(r'<[^>]+>', '', text)
 
 
 def get_user_from_id(user_id: str) -> Optional[str]:
-
     try:
-
         conn = http.client.HTTPSConnection("api.heartbeat.chat")
-
         headers = {
-
-            'authorization': 'Bearer hb:6472bf208fe2f6c71746acdb96b35fe6877d84c8e4a6c78365',
-
+            'authorization': 'Bearer hb:76bffd9b05b2539c4d9d0960e825d2dd34bcaba31c32e0058e',
             'content-type': 'application/json'
-
         }
-
         conn.request("GET", f"/v0/users/{user_id}", headers=headers)
-
         res = conn.getresponse()
-
         data = res.read()
-
 
         user = json.loads(data.decode("utf-8"))
         return user
 
+    except Exception as e:
+        print(f"Error fetching user: {e}")
+        return None
+
+def check_if_channel_category_exists(name: str):
+    try:
+        conn = http.client.HTTPSConnection("api.heartbeat.chat")
+        headers = {
+            'authorization': 'Bearer hb:76bffd9b05b2539c4d9d0960e825d2dd34bcaba31c32e0058e',
+            'accept': 'application/json'
+        }
+        conn.request("GET", "/v0/channelCategories", headers=headers)
+        res = conn.getresponse()
+        data = res.read()
+
+        channel_categories = json.loads(data.decode("utf-8"))
+
+        for category in channel_categories:
+            if category['name'] == name:
+                return category['id']
+
+        return None
 
     except Exception as e:
-
-        print(f"Error fetching user: {e}")
-
+        print(f"Error fetching channel categories: {e}")
         return None
 
 
 
 def get_ai_response(user_message: str) -> Optional[str]:
-
     try:
         conn = http.client.HTTPConnection("54.161.37.146")
         payload = json.dumps({
             "user_message": user_message,
             "conversation_history": []  # Empty history for now
         })
-
         headers = {
             'Content-Type': 'application/json'
         }
-
         conn.request("POST", "/chat/", payload, headers)
         res = conn.getresponse()
         data = res.read()
@@ -145,8 +147,12 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
                 send_direct_message(sender_user_id, adminid, response_text)
 
                 # store_message_in_dynamodb(chat_id, generate_message_id(), response_text, adminid)
-                
-                channel_category_id = create_channel_category("Matches")
+                                
+                channel_category_id = check_if_channel_category_exists("Matches")
+
+                # If the category doesn't exist, create it
+                if not channel_category_id:
+                    channel_category_id = create_channel_category("Matches")
 
                 if channel_category_id:
                     create_chat_channel(channel_category_id, user_email, sender_user_id)
@@ -331,7 +337,7 @@ def send_direct_message(to_user: str, from_user: str, text: str) -> Optional[str
 
         headers = {
 
-            'authorization': 'Bearer hb:6472bf208fe2f6c71746acdb96b35fe6877d84c8e4a6c78365',
+            'authorization': 'Bearer hb:76bffd9b05b2539c4d9d0960e825d2dd34bcaba31c32e0058e',
 
             'content-type': 'application/json'
 
@@ -363,7 +369,7 @@ def get_recent_messages(chat_id: str) -> list:
         conn = http.client.HTTPSConnection("api.heartbeat.chat")
 
         headers = {
-            'authorization': 'Bearer hb:6472bf208fe2f6c71746acdb96b35fe6877d84c8e4a6c78365',
+            'authorization': 'Bearer hb:76bffd9b05b2539c4d9d0960e825d2dd34bcaba31c32e0058e',
             'accept': 'application/json'
         }
 
@@ -386,51 +392,31 @@ def get_recent_messages(chat_id: str) -> list:
 
 
 def create_channel_category(name: str) -> Optional[str]:
-
     try:
-
         conn = http.client.HTTPSConnection("api.heartbeat.chat")
-
         payload = json.dumps({
             "name": name
-
         })
-
         headers = {
-
-            'authorization': 'Bearer hb:6472bf208fe2f6c71746acdb96b35fe6877d84c8e4a6c78365',
-
+            'authorization': 'Bearer hb:76bffd9b05b2539c4d9d0960e825d2dd34bcaba31c32e0058e',
             'content-type': 'application/json'
-
         }
-
         conn.request("PUT", "/v0/channelCategories", payload, headers)
-
         res = conn.getresponse()
-
         data = res.read()
 
-
         print(f"Create channel category response: {data.decode('utf-8')}")
-
         response_json = json.loads(data.decode("utf-8"))
-
         return response_json.get('id')
 
-
     except Exception as e:
-
         print(f"Error creating channel category: {e}")
-
         return None
 
 
 def create_chat_channel(channel_category_id: str, user_email: str, sender_user_id: str) -> Optional[str]:
-
     try:
-
         conn = http.client.HTTPSConnection("api.heartbeat.chat")
-
         payload = json.dumps({
             "isPrivate": True,
             "channelCategoryID": channel_category_id,
@@ -442,20 +428,16 @@ def create_chat_channel(channel_category_id: str, user_email: str, sender_user_i
             ],
             "channelType": "CHAT"
         })
-
         headers = {
-            'authorization': 'Bearer hb:6472bf208fe2f6c71746acdb96b35fe6877d84c8e4a6c78365',
+            'authorization': 'Bearer hb:76bffd9b05b2539c4d9d0960e825d2dd34bcaba31c32e0058e',
             'content-type': 'application/json'
         }
-
         conn.request("PUT", "/v0/channels", payload, headers)
         res = conn.getresponse()
         data = res.read()
 
-
         print(f"Create chat channel response: {data.decode('utf-8')}")
         return data.decode("utf-8")
-
 
     except Exception as e:
         print(f"Error creating chat channel: {e}")
