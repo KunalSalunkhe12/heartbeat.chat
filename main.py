@@ -91,8 +91,6 @@ def get_user_from_id(user_id: str) -> Optional[str]:
 
 def get_ai_response(user_message: str) -> Optional[str]:
 
-    print("Conversation history: ", conversation_history)
-
     try:
         conn = http.client.HTTPConnection("54.161.37.146")
         payload = json.dumps({
