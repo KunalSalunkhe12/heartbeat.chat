@@ -126,4 +126,4 @@ def run_matchmaking_algorithm(user_id: str, tableProfile: any):
 
     #     compatibility_score_for_all_users[user_pair] = compatibility_score
 
-    return {user, all_users}
+    return {"user": user, "all_users": all_users}
