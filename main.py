@@ -102,13 +102,13 @@ def get_user_from_id(user_id: str) -> Optional[str]:
 
 
 
-def get_ai_response(user_message: str) -> Optional[str]:
+def get_ai_response(user_message: str, conversation_history: list) -> Optional[str]:
 
     try:
         conn = http.client.HTTPConnection("54.161.37.146")
         payload = json.dumps({
             "user_message": user_message,
-            "conversation_history": []  # Empty history for now
+            "conversation_history": conversation_history  # Empty history for now
         })
 
         headers = {
@@ -166,7 +166,7 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
                 
                 return True
             
-            ai_response = get_ai_response(clean_message_content)
+            ai_response = get_ai_response(clean_message_content, recent_messages)
             if ai_response:
                 send_direct_message(sender_user_id, adminid, ai_response['assistant_response'])
                 store_message_in_dynamodb(chat_id, generate_message_id(), ai_response, adminid)
@@ -376,35 +376,25 @@ def get_recent_messages(chat_id: str) -> list:
         conn = http.client.HTTPSConnection("api.heartbeat.chat")
 
         headers = {
-
             'authorization': 'Bearer hb:6472bf208fe2f6c71746acdb96b35fe6877d84c8e4a6c78365',
-
             'accept': 'application/json'
-
         }
 
         conn.request("GET", f"/v0/directMessages/{chat_id}", headers=headers)
-
         res = conn.getresponse()
-
         data = res.read()
-
 
         messages = json.loads(data.decode("utf-8"))
 
         if isinstance(messages, list):
             return messages
         else:
-
             print(f"Unexpected response format: {messages}")
-
             return []
 
 
     except Exception as e:
-
         print(f"Error fetching recent messages: {e}")
-
         return []
 
 
