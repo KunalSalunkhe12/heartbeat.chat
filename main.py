@@ -113,12 +113,6 @@ def get_ai_response(user_message: str, chat_id: str) -> Optional[str]:
                     "content": item['MessageContent']
                 })
         
-        # Add the current user message
-        conversation_history.append({
-            "role": "user",
-            "content": user_message
-        })
-
         conn = http.client.HTTPConnection("54.161.37.146")
         payload = json.dumps({
             "user_message": user_message,
