@@ -1,3 +1,4 @@
+import time
 import json
 import re
 import http.client
@@ -258,10 +259,12 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
 
 
 def store_message_in_dynamodb(chat_id: str, message_id: str, message_content: str, sender_user_id: str):
+    timestamp = int(time.time() * 1000)  # Current time in milliseconds
     try:
         tableChat.put_item(
             Item={
                 'ChatID': chat_id,
+                'Timestamp': timestamp,
                 'MessageID': message_id,
                 'MessageContent': message_content,
                 'SenderUserID': sender_user_id
