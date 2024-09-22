@@ -94,12 +94,34 @@ def check_if_channel_category_exists(name: str):
 
 
 
-def get_ai_response(user_message: str) -> Optional[str]:
+def get_ai_response(user_message: str, chat_id: str) -> Optional[str]:
     try:
+        response = tableChat.query(
+            KeyConditionExpression=Key('ChatID').eq(chat_id),
+            ScanIndexForward=False,  # Sort in descending order (most recent first)
+            Limit=10  # Limit to last 10 messages
+        )
+        
+        # Format the conversation history
+        conversation_history = []
+        if 'Items' in response and response['Items']:
+            for item in reversed(response['Items']):  # Reverse to get chronological order
+                role = "assistant" if item['SenderUserID'] == adminid else "user"
+                conversation_history.append({
+                    "role": role,
+                    "content": item['MessageContent']
+                })
+        
+        # Add the current user message
+        conversation_history.append({
+            "role": "user",
+            "content": user_message
+        })
+
         conn = http.client.HTTPConnection("54.161.37.146")
         payload = json.dumps({
             "user_message": user_message,
-            "conversation_history": []  # Empty history for now
+            "conversation_history": conversation_history
         })
         headers = {
             'Content-Type': 'application/json'
@@ -136,7 +158,6 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
             clean_message_content = strip_html_tags(latest_message_content)
             print(f"Latest message content (cleaned): {clean_message_content}")
 
-            store_message_in_dynamodb(chat_id, chat_message_id, clean_message_content, sender_user_id)
 
             if clean_message_content == "i want to get matched":
                 send_direct_message(sender_user_id, adminid, "Finding a match for you... May take a few seconds.")
@@ -162,10 +183,13 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
                 
                 return True
             
-            ai_response = get_ai_response(clean_message_content)
+            ai_response = get_ai_response(clean_message_content, chat_id)
             if ai_response:
                 send_direct_message(sender_user_id, adminid, ai_response['assistant_response'])
-                store_message_in_dynamodb(chat_id, generate_message_id(), ai_response, adminid)
+
+                # Store messages in dynamoDb
+                store_message_in_dynamodb(chat_id, chat_message_id, clean_message_content, sender_user_id)
+                store_message_in_dynamodb(chat_id, generate_message_id(), ai_response['assistant_response'], adminid)
                 store_user_profile_in_dynamodb(sender_user_id, ai_response['user_profile'])
 
                 return True
@@ -382,30 +406,19 @@ def create_chat_channel(channel_category_id: str, sender_user_id: str, matched_u
 
 
 def generate_message_id() -> str:
-
     return str(uuid.uuid4())
 
 
 @app.post("/process_message")
-
 async def process_message(message: MessageRequest):
-
     try:
-
         success = process_direct_message(message.senderUserID, adminid, message.chatID, message.chatMessageID)
-
         if success:
-
             return {"success": True, "message": "Message processed successfully"}
         else:
-
             raise HTTPException(status_code=500, detail="Message processing failed")
-
-
     except Exception as e:
-
         print(f"Error in process_message: {e}")
-
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/")
@@ -415,7 +428,5 @@ async def root():
 
 
 if __name__ == "__main__":
-
     import uvicorn
-
     uvicorn.run(app, host="0.0.0.0", port=8000)
