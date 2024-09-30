@@ -100,16 +100,14 @@ def get_ai_response(user_message: str, chat_id: str) -> Optional[str]:
         response = tableChat.query(
             KeyConditionExpression=Key('ChatID').eq(chat_id),
             ScanIndexForward=False,  # Sort in descending order (most recent first)
-            Limit=20  # Limit to last 10 messages
+            Limit=10  # Limit to last 10 messages
         )
         
         # Format the conversation history
-        conversation_history = [
-            {
+        conversation_history = [{
             "role": "system",
             "content": constant.assistantInstructions
-        }
-        ]
+        }]
         if 'Items' in response and response['Items']:
             for item in reversed(response['Items']):  # Reverse to get chronological order
                 role = "assistant" if item['SenderUserID'] == adminid else "user"
@@ -118,6 +116,8 @@ def get_ai_response(user_message: str, chat_id: str) -> Optional[str]:
                     "content": item['MessageContent']
                 })
         
+
+        print(f"Conversation history: {conversation_history}")
         conn = http.client.HTTPConnection(schat_url)
         payload = json.dumps({
             "user_message": user_message,
