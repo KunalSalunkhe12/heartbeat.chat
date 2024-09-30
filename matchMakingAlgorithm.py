@@ -1,39 +1,43 @@
 import json
-from itertools import combinations
+from concurrent.futures import ThreadPoolExecutor
 import openai
 import os
 
+# Load OpenAI API key from environment
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 openai.api_key = OPENAI_API_KEY
 
-def call_openai_assistant(json_schema, all_messages):
-    # Make the API call with the new interface
-    response = openai.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=all_messages,
-        response_format={
-            "type": "json_schema",
-            "json_schema": json_schema
-        }
-    )
+# Function to call OpenAI assistant with batch processing
+def call_openai_assistant_batch(json_schema, all_messages_batch):
+    try:
+        response = openai.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=all_messages_batch,
+            response_format={
+                "type": "json_schema",
+                "json_schema": json_schema
+            }
+        )
 
-    assistant_response = response.choices[0].message.content
+        # Extract all responses
+        assistant_responses = [choice.message.content for choice in response.choices]
+        return assistant_responses
+    except Exception as e:
+        print(f"Error during OpenAI call: {e}")
+        return None
 
-    # Return the response
-    return assistant_response
-
+# Function to fetch a single user profile from the database
 def get_user_profile(user_id: str, tableProfile):
     try:
         response = tableProfile.get_item(
-            Key={
-                'UserID': user_id
-            }
+            Key={'UserID': user_id}
         )
         return response.get('Item')
     except Exception as e:
         print(f"Error fetching user profile: {e}")
         return None
 
+# Function to fetch all user profiles from the database in a batch
 def get_all_user_profiles(tableProfile):
     try:
         response = tableProfile.scan()
@@ -42,29 +46,28 @@ def get_all_user_profiles(tableProfile):
         print(f"Error fetching all user profiles: {e}")
         return None
 
+# Optimized matchmaking function with batch API calls and parallel processing
 def run_matchmaking_algorithm(user_id: str, tableProfile: any):
-    # Matchmaking Algorithm
+    # Matchmaking JSON schema
     json_schema = {
         "name": "matchmaking_score",
         "strict": True,
         "schema": {
             "type": "object",
             "properties": {
-                "compatibility_score": {
-                    "type": "integer"
-                }
+                "compatibility_score": {"type": "integer"}
             },
-            "required": [
-                "compatibility_score"
-            ],
+            "required": ["compatibility_score"],
             "additionalProperties": False
         }
     }
+
     all_messages = [{
         "role": "system",
-        "content": '''You're an expert matchmaker. You'll be given attributes from 2 different people's matchmaking profiles in JSON format, compare them and output a compatibility score (on a scale of 1 to 10). Think carefully.'''
+        "content": '''You're an expert matchmaker. You'll be given attributes from 2 different people's matchmaking profiles in JSON format, compare them and output a compatibility score (on a scale of 1 to 10).'''
     }]
 
+    # Attribute weights
     weights = {
         "Relationship_Goals": 1,
         "Appearance": 0.8,
@@ -83,41 +86,67 @@ def run_matchmaking_algorithm(user_id: str, tableProfile: any):
         "Special_Requests": 0
     }
 
+    # Fetch user profiles
     user = get_user_profile(user_id, tableProfile)
     all_users = get_all_user_profiles(tableProfile)
 
     if not user or not all_users:
         return {"error": "Failed to fetch user profiles"}
 
-    compatibility_scores = {}
-
-    for other_user in all_users:
+    # Function to process each user in parallel
+    def process_other_user(other_user):
         if other_user['UserID'] == user_id:
-            continue  # Skip comparing with self
+            return None  # Skip self
 
         compatibility_score = 0
+        all_messages_batch = []
+
         for attribute, weight in weights.items():
             content_dict = {
                 "Person 1": user.get(attribute, "Not specified"),
                 "Person 2": other_user.get(attribute, "Not specified")
             }
 
-            all_messages.append({
+            # Add comparison request to batch
+            all_messages_batch.append({
                 "role": "user",
                 "content": json.dumps(content_dict)
             })
 
-            assistant_response = call_openai_assistant(json_schema, all_messages)
-            attribute_score = json.loads(assistant_response)["compatibility_score"]
-            print(f"{attribute} score for {user_id} and {other_user['UserID']} is = {attribute_score}")
+        # Batch API call to OpenAI
+        assistant_responses = call_openai_assistant_batch(json_schema, all_messages_batch)
 
-            compatibility_score += attribute_score * weight
+        # Process responses for each attribute
+        for response, attribute in zip(assistant_responses, weights.keys()):
+            try:
+                attribute_score = json.loads(response)["compatibility_score"]
+                compatibility_score += attribute_score * weights[attribute]
+            except (json.JSONDecodeError, KeyError):
+                print(f"Error decoding response for attribute {attribute}")
+                continue
 
-        compatibility_scores[other_user['UserID']] = compatibility_score
-        top_match = sorted(compatibility_scores.items(), key=lambda x: x[1], reverse=True)[0]
+        return other_user['UserID'], compatibility_score
+
+    # Run matchmaking in parallel
+    with ThreadPoolExecutor() as executor:
+        results = executor.map(process_other_user, all_users)
+
+    # Collect valid results
+    compatibility_scores = dict(filter(None, results))
+
+    # Find the top match
+    if compatibility_scores:
+        top_match = max(compatibility_scores.items(), key=lambda x: x[1])
+    else:
+        top_match = None
 
     return {
         "user": user,
         "compatibility_scores": compatibility_scores,
         "top_match": top_match
     }
+
+# Example usage
+# tableProfile should be the DynamoDB or any other database resource being passed here
+# user_id is the ID of the user for whom matchmaking needs to be run
+# run_matchmaking_algorithm(user_id, tableProfile)
