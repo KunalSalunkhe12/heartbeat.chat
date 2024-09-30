@@ -134,6 +134,54 @@ def generate_dynamic_weights(user):
             return {}
     return {}
 
+def give_explanation(user_id: str, matched_id: str, tableProfile):
+    user = get_user_profile(user_id, tableProfile)
+    matched_user = get_user_profile(matched_id, tableProfile)
+
+    prompt = (
+        f"Provide a brief explanation of why the following two users were matched:\n"
+        f"Profil 1{json.dumps(user_profile)}\n"
+        f"Profile 2: {json.dumps(top_match_profile)}\n"
+        f"Explain the compatibility factors that led to their match."
+        "Only give a brief explanation of the key factors that make them compatible."
+    )
+
+    all_messages_batch = [{
+        "role": "system",
+        "content": "You are an expert matchmaker. Explain why two users are compatible."
+    }, {
+        "role": "user",
+        "content": prompt
+    }]
+
+    json_schema = {
+        "name": "match_explanation",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "explanation": {"type": "string"}
+            },
+            "required": ["explanation"],
+            "additionalProperties": False
+        }
+    }
+
+    # Call OpenAI API to get the explanation
+    response = call_openai_assistant_batch(json_schema, all_messages_batch)
+    if response and len(response) > 0:
+        try:
+            explanation = json.loads(response[0])["explanation"]
+            return explanation
+        except (json.JSONDecodeError, KeyError):
+            print("Error decoding explanation response.")
+            return "Unable to generate explanation."
+    return "No response from OpenAI."
+
+
+
+    # Complete the function
+
 # Optimized matchmaking function with batch API calls and parallel processing
 def run_matchmaking_algorithm(user_id: str, tableProfile: any):
     # Matchmaking JSON schema
