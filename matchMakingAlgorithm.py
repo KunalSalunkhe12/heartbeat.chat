@@ -81,6 +81,7 @@ def generate_dynamic_weights(user):
         try:
             # Parse the JSON response to get weights
             weights = json.loads(response[0])
+            print(f"Generated weights: {weights}")
             return weights
         except (json.JSONDecodeError, IndexError):
             print("Error decoding weights response.")
@@ -164,6 +165,12 @@ def run_matchmaking_algorithm(user_id: str, tableProfile: any):
         top_match = max(compatibility_scores.items(), key=lambda x: x[1])
     else:
         top_match = None
+
+        print("Compatibility scores:")
+        for user_id, score in compatibility_scores.items():
+            print(f"User ID: {user_id}, Compatibility Score: {score}")
+
+        print(f"Top match: {top_match}")
 
     return {
         "user": user,
