@@ -75,8 +75,51 @@ def generate_dynamic_weights(user):
         "content": prompt
     }]
 
+    json_schema = {
+        "name": "weights",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "relationship_goals": {"type": "number"},
+                "appearance": {"type": "number"},
+                "location": {"type": "number"},
+                "spirituality": {"type": "number"},
+                "personality_attributes": {"type": "number"},
+                "age": {"type": "number"},
+                "interests": {"type": "number"},
+                "identity_and_preference": {"type": "number"},
+                "kids": {"type": "number"},
+                "smoking": {"type": "number"},
+                "pets": {"type": "number"},
+                "career_goals": {"type": "number"},
+                "annual_income": {"type": "number"},
+                "willingness_to_travel": {"type": "number"},
+                "special_requests": {"type": "number"}
+            },
+            "required": [
+                "relationship_goals",
+                "appearance",
+                "location",
+                "spirituality",
+                "personality_attributes",
+                "age",
+                "interests",
+                "identity_and_preference",
+                "kids",
+                "smoking",
+                "pets",
+                "career_goals",
+                "annual_income",
+                "willingness_to_travel",
+                "special_requests"
+            ],
+            "additionalProperties": False
+        }
+    }
+
     # Call OpenAI API to get weights
-    response = call_openai_assistant_batch(None, all_messages_batch)
+    response = call_openai_assistant_batch(json_schema, all_messages_batch)
     if response and len(response) > 0:
         try:
             # Parse the JSON response to get weights
