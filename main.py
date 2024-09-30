@@ -161,7 +161,7 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
                 res = matchMakingAlgorithm.run_matchmaking_algorithm(sender_user_id, tableProfile)
 
                 matched_user_id = res.get('top_match')[0]
-                explanation = matchMakingAlgorithm.give_explanation(sender_user_id, matched_user_id, tableProfile)
+                # explanation = matchMakingAlgorithm.give_explanation(sender_user_id, matched_user_id, tableProfile)
         
                 print(f"Matched user ID: {matched_user_id}")
                 if not matched_user_id:
@@ -178,7 +178,7 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
                     chat_channel_id = create_chat_channel(channel_category_id, sender_user_id, matched_user_id, adminid)
                     print(f"Chat channel created with ID: {chat_channel_id}")
                     send_direct_message(sender_user_id, adminid, "Match Found 💖, Find your match in the Matches channel")
-                    send_direct_message_channel(chat_channel_id, adminid, explanation)
+                    # send_direct_message_channel(chat_channel_id, adminid, explanation)
 
                     print(f"Match channel created for user {sender_user_id} in category {channel_category_id}.")
                 else:
