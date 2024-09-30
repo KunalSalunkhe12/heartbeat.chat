@@ -422,7 +422,7 @@ def create_chat_channel(channel_category_id: str, sender_user_id: str, matched_u
         res = conn.getresponse()
         data = res.read()
         response_json = json.loads(data.decode("utf-8"))
-        return response_json.get('id')
+        return response_json
 
     except Exception as e:
         print(f"Error creating chat channel: {e}")
