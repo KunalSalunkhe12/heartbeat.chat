@@ -161,6 +161,7 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
                 res = matchMakingAlgorithm.run_matchmaking_algorithm(sender_user_id, tableProfile)
 
                 matched_user_id = res.get('top_match')[0]
+                explanation = res.get('explanation')
                 print(f"Matched user ID: {matched_user_id}")
                 if not matched_user_id:
                     send_direct_message(sender_user_id, adminid, "No matches found. Please try again later.🥺")
@@ -173,8 +174,10 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
                     channel_category_id = create_channel_category("Matches")
 
                 if channel_category_id:
-                    chat_channel_res = create_chat_channel(channel_category_id, sender_user_id, matched_user_id, adminid)
+                    chat_channel_id = create_chat_channel(channel_category_id, sender_user_id, matched_user_id, adminid)
                     send_direct_message(sender_user_id, adminid, "Match Found 💖, Find your match in the Matches channel")
+                    send_direct_message_channel(chat_channel_id, adminid, explanation)
+
                     print(f"Match channel created for user {sender_user_id} in category {channel_category_id}.")
                 else:
                     print("Failed to create channel category for matches.")
@@ -310,6 +313,28 @@ def send_direct_message(to_user: str, from_user: str, text: str) -> Optional[str
         print(f"Error sending direct message: {e}")
         return None
 
+def send_direct_message_channel(channel_id: str, from_user: str, text: str) -> Optional[str]:
+    try:
+        conn = http.client.HTTPSConnection(heart_api_url)
+        payload = json.dumps({
+            "from": from_user,
+            "text": format_text(text)
+        })
+        headers = {
+            'authorization': f'Bearer {bearer_token}',
+            'content-type': 'application/json'
+        }
+
+        conn.request("PUT", f"/v0/chatChannel/{channel_id}/message", payload, headers)
+        res = conn.getresponse()
+        data = res.read()
+
+        return data.decode("utf-8")
+
+    except Exception as e:
+        print(f"Error sending direct message: {e}")
+        return None
+
 
 def format_text(text: str) -> str:
     return "<p>" + text + "</p>"
@@ -397,8 +422,9 @@ def create_chat_channel(channel_category_id: str, sender_user_id: str, matched_u
         res = conn.getresponse()
         data = res.read()
 
-        print(f"Create chat channel response: {data.decode('utf-8')}")
-        return data.decode("utf-8")
+        print(f"Create channel chat response: {data.decode('utf-8')}")
+        response_json = json.loads(data.decode("utf-8"))
+        return response_json.get('id')
 
     except Exception as e:
         print(f"Error creating chat channel: {e}")

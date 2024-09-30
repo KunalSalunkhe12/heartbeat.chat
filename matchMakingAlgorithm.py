@@ -134,6 +134,47 @@ def generate_dynamic_weights(user):
             return {}
     return {}
 
+# Function to generate explanation for the match
+def generate_match_explanation(user_profile, top_match_profile):
+    prompt = (
+        f"Provide a brief explanation of why the following two users were matched:\n"
+        f"User 1 Profile: {json.dumps(user_profile)}\n"
+        f"User 2 Profile: {json.dumps(top_match_profile)}\n"
+        f"Explain the compatibility factors that led to their match."
+    )
+
+    all_messages_batch = [{
+        "role": "system",
+        "content": "You are an expert matchmaker. Explain why two users are compatible."
+    }, {
+        "role": "user",
+        "content": prompt
+    }]
+
+    json_schema = {
+        "name": "match_explanation",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "explanation": {"type": "string"}
+            },
+            "required": ["explanation"],
+            "additionalProperties": False
+        }
+    }
+
+    # Call OpenAI API to get the explanation
+    response = call_openai_assistant_batch(json_schema, all_messages_batch)
+    if response and len(response) > 0:
+        try:
+            explanation = json.loads(response[0])["explanation"]
+            return explanation
+        except (json.JSONDecodeError, KeyError):
+            print("Error decoding explanation response.")
+            return "Unable to generate explanation."
+    return "No response from OpenAI."
+
 # Optimized matchmaking function with batch API calls and parallel processing
 def run_matchmaking_algorithm(user_id: str, tableProfile: any):
     # Matchmaking JSON schema
@@ -207,21 +248,26 @@ def run_matchmaking_algorithm(user_id: str, tableProfile: any):
     compatibility_scores = dict(filter(None, results))
 
     # Find the top match
-    if compatibility_scores:
-        top_match = max(compatibility_scores.items(), key=lambda x: x[1])
+    top_match = max(compatibility_scores.items(), key=lambda x: x[1], default=None)
+
+    if top_match:
+        top_match_profile = get_user_profile(top_match[0], tableProfile)  # Fetch top match profile
+        explanation = generate_match_explanation(user, top_match_profile)  # Generate explanation
     else:
-        top_match = None
+        explanation = "No matches found."
 
-        print("Compatibility scores:")
-        for user_id, score in compatibility_scores.items():
-            print(f"User ID: {user_id}, Compatibility Score: {score}")
+    print("Compatibility scores:")
+    for user_id, score in compatibility_scores.items():
+        print(f"User ID: {user_id}, Compatibility Score: {score}")
 
-        print(f"Top match: {top_match}")
+    print(f"Top match: {top_match}")
+    print(f"Match Explanation: {explanation}")
 
     return {
         "user": user,
         "compatibility_scores": compatibility_scores,
-        "top_match": top_match
+        "top_match": top_match,
+        "explanation": explanation  # Include the explanation in the return
     }
 
 # Example usage
