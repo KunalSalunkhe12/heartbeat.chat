@@ -46,6 +46,47 @@ def get_all_user_profiles(tableProfile):
         print(f"Error fetching all user profiles: {e}")
         return None
 
+# Function to generate dynamic weights using OpenAI API
+def generate_dynamic_weights(user):
+    # Create a message to send to OpenAI API
+    prompt = f"Generate weights for the following user attributes based on user preferences:\n" \
+             f"Relationship Goals: {user.get('Relationship_Goals')}\n" \
+             f"Appearance: {user.get('Appearance')}\n" \
+             f"Location: {user.get('Location')}\n" \
+             f"Spirituality: {user.get('Spirituality')}\n" \
+             f"Personality Attributes: {user.get('Personality_Attributes')}\n" \
+             f"Age: {user.get('Age')}\n" \
+             f"Interests: {user.get('Interests')}\n" \
+             f"Identity and Preference: {user.get('Identity_and_Preference')}\n" \
+             f"Kids: {user.get('Kids')}\n" \
+             f"Smoking: {user.get('Smoking')}\n" \
+             f"Pets: {user.get('Pets')}\n" \
+             f"Career Goals: {user.get('Career_Goals')}\n" \
+             f"Annual Income: {user.get('Annual_Income')}\n" \
+             f"Willingness to Travel: {user.get('Willingness_to_Travel')}\n" \
+             f"Special Requests: {user.get('Special_Requests')}\n" \
+             f"Please output a JSON object with weights for each attribute, scaled between 0 and 1."
+
+    all_messages_batch = [{
+        "role": "system",
+        "content": "You are an expert in matchmaking. Generate weights based on user profile attributes."
+    }, {
+        "role": "user",
+        "content": prompt
+    }]
+
+    # Call OpenAI API to get weights
+    response = call_openai_assistant_batch(None, all_messages_batch)
+    if response and len(response) > 0:
+        try:
+            # Parse the JSON response to get weights
+            weights = json.loads(response[0])
+            return weights
+        except (json.JSONDecodeError, IndexError):
+            print("Error decoding weights response.")
+            return {}
+    return {}
+
 # Optimized matchmaking function with batch API calls and parallel processing
 def run_matchmaking_algorithm(user_id: str, tableProfile: any):
     # Matchmaking JSON schema
@@ -67,31 +108,15 @@ def run_matchmaking_algorithm(user_id: str, tableProfile: any):
         "content": '''You're an expert matchmaker. You'll be given attributes from 2 different people's matchmaking profiles in JSON format, compare them and output a compatibility score (on a scale of 1 to 10).'''
     }]
 
-    # Attribute weights
-    weights = {
-        "Relationship_Goals": 1,
-        "Appearance": 0.8,
-        "Location": 0.5,
-        "Spirituality": 0.5,
-        "Personality_Attributes": 0.7,
-        "Age": 0.8,
-        "Interests": 0.7,
-        "Identity_and_Preference": 1,
-        "Kids": 0.1,
-        "Smoking": 0.1,
-        "Pets": 0.1,
-        "Career_Goals": 0.2,
-        "Annual_Income": 0.2,
-        "Willingness_to_Travel": 0.1,
-        "Special_Requests": 0
-    }
-
     # Fetch user profiles
     user = get_user_profile(user_id, tableProfile)
     all_users = get_all_user_profiles(tableProfile)
 
     if not user or not all_users:
         return {"error": "Failed to fetch user profiles"}
+
+    # Generate dynamic weights based on the user profile using OpenAI API
+    weights = generate_dynamic_weights(user)
 
     # Function to process each user in parallel
     def process_other_user(other_user):
