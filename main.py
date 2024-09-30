@@ -18,17 +18,16 @@ app = FastAPI()
 
 AWS_REGION = "us-east-1"  # Replace with your preferred AWS region
 os.environ['AWS_DEFAULT_REGION'] = AWS_REGION
+schat_url = os.getenv("SCHAT_URL")
+adminid = os.getenv("ADMIN_ID")
+heart_api_url = os.getenv("HEART_API_URL")
+bearer_token = os.getenv("HEART_BEARER_TOKEN")
+
 
 # Initialize DynamoDB client
-
 dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
-
 tableChat = dynamodb.Table('ChatMessages')
 tableProfile = dynamodb.Table('UserProfiles')
-
-# Hardcoded admin ID
-
-adminid = 'ef5490d5-e978-4d3e-9596-ba0f667b698e'
 
 
 # State variables
@@ -54,9 +53,9 @@ def strip_html_tags(text: str) -> str:
 
 def get_user_from_id(user_id: str) -> Optional[str]:
     try:
-        conn = http.client.HTTPSConnection("api.heartbeat.chat")
+        conn = http.client.HTTPSConnection(heart_api_url)
         headers = {
-            'authorization': 'Bearer hb:76bffd9b05b2539c4d9d0960e825d2dd34bcaba31c32e0058e',
+            'authorization': f'Bearer {bearer_token}',
             'content-type': 'application/json'
         }
         conn.request("GET", f"/v0/users/{user_id}", headers=headers)
@@ -72,9 +71,9 @@ def get_user_from_id(user_id: str) -> Optional[str]:
 
 def check_if_channel_category_exists(name: str):
     try:
-        conn = http.client.HTTPSConnection("api.heartbeat.chat")
+        conn = http.client.HTTPSConnection(heart_api_url)
         headers = {
-            'authorization': 'Bearer hb:76bffd9b05b2539c4d9d0960e825d2dd34bcaba31c32e0058e',
+            'authorization': f'Bearer {bearer_token}',
             'accept': 'application/json'
         }
         conn.request("GET", "/v0/channelCategories", headers=headers)
@@ -113,7 +112,7 @@ def get_ai_response(user_message: str, chat_id: str) -> Optional[str]:
                     "content": item['MessageContent']
                 })
         
-        conn = http.client.HTTPConnection("54.161.37.146")
+        conn = http.client.HTTPConnection(schat_url)
         payload = json.dumps({
             "user_message": user_message,
             "conversation_history": conversation_history
@@ -287,14 +286,14 @@ def store_user_profile_in_dynamodb(user_id: str, user_profile: dict):
 def send_direct_message(to_user: str, from_user: str, text: str) -> Optional[str]:
     try:
         print(f"Sending message from {from_user} to {to_user}")
-        conn = http.client.HTTPSConnection("api.heartbeat.chat")
+        conn = http.client.HTTPSConnection(heart_api_url)
         payload = json.dumps({
             "from": from_user,
             "to": to_user,
             "text": format_text(text)
         })
         headers = {
-            'authorization': 'Bearer hb:76bffd9b05b2539c4d9d0960e825d2dd34bcaba31c32e0058e',
+            'authorization': f'Bearer {bearer_token}',
             'content-type': 'application/json'
         }
 
@@ -316,10 +315,10 @@ def get_recent_messages(chat_id: str) -> list:
 
     try:
 
-        conn = http.client.HTTPSConnection("api.heartbeat.chat")
+        conn = http.client.HTTPSConnection(heart_api_url)
 
         headers = {
-            'authorization': 'Bearer hb:76bffd9b05b2539c4d9d0960e825d2dd34bcaba31c32e0058e',
+            'authorization': f'Bearer {bearer_token}',
             'accept': 'application/json'
         }
 
@@ -343,12 +342,12 @@ def get_recent_messages(chat_id: str) -> list:
 
 def create_channel_category(name: str) -> Optional[str]:
     try:
-        conn = http.client.HTTPSConnection("api.heartbeat.chat")
+        conn = http.client.HTTPSConnection(heart_api_url)
         payload = json.dumps({
             "name": name
         })
         headers = {
-            'authorization': 'Bearer hb:76bffd9b05b2539c4d9d0960e825d2dd34bcaba31c32e0058e',
+            'authorization': f'Bearer {bearer_token}',
             'content-type': 'application/json'
         }
         conn.request("PUT", "/v0/channelCategories", payload, headers)
@@ -374,7 +373,7 @@ def create_chat_channel(channel_category_id: str, sender_user_id: str, matched_u
         user_name = get_user_from_id(sender_user_id).get('name')
 
 
-        conn = http.client.HTTPSConnection("api.heartbeat.chat")
+        conn = http.client.HTTPSConnection(heart_api_url)
         payload = json.dumps({
             "isPrivate": True,
             "channelCategoryID": channel_category_id,
@@ -388,7 +387,7 @@ def create_chat_channel(channel_category_id: str, sender_user_id: str, matched_u
             "channelType": "CHAT"
         })
         headers = {
-            'authorization': 'Bearer hb:76bffd9b05b2539c4d9d0960e825d2dd34bcaba31c32e0058e',
+            'authorization': f'Bearer {bearer_token}',
             'content-type': 'application/json'
         }
         conn.request("PUT", "/v0/channels", payload, headers)
