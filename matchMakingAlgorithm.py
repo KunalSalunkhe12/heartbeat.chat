@@ -140,8 +140,8 @@ def give_explanation(user_id: str, matched_id: str, tableProfile):
 
     prompt = (
         f"Provide a brief explanation of why the following two users were matched:\n"
-        f"Profil 1{json.dumps(user_profile)}\n"
-        f"Profile 2: {json.dumps(top_match_profile)}\n"
+        f"Profil 1{json.dumps(user)}\n"
+        f"Profile 2: {json.dumps(matched_user)}\n"
         f"Explain the compatibility factors that led to their match."
         "Only give a brief explanation of the key factors that make them compatible."
     )
