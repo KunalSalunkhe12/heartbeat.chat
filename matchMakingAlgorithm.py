@@ -49,6 +49,7 @@ def get_all_user_profiles(tableProfile):
 # Function to generate dynamic weights using OpenAI API
 def generate_dynamic_weights(user):
     # Create a message to send to OpenAI API
+    print(f"User profile: {user}")
     prompt = f"Generate weights for the following user attributes based on user preferences:\n" \
              f"Relationship Goals: {user.get('Relationship_Goals')}\n" \
              f"Appearance: {user.get('Appearance')}\n" \
@@ -66,6 +67,8 @@ def generate_dynamic_weights(user):
              f"Willingness to Travel: {user.get('Willingness_to_Travel')}\n" \
              f"Special Requests: {user.get('Special_Requests')}\n" \
              f"Please output a JSON object with weights for each attribute, scaled between 0 and 1."
+
+    print(f"Prompt: {prompt}")
 
     all_messages_batch = [{
         "role": "system",
