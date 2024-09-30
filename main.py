@@ -161,7 +161,6 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
                 res = matchMakingAlgorithm.run_matchmaking_algorithm(sender_user_id, tableProfile)
 
                 matched_user_id = res.get('top_match')[0]
-                explanation = res.get('explanation')
                 print(f"Matched user ID: {matched_user_id}")
                 if not matched_user_id:
                     send_direct_message(sender_user_id, adminid, "No matches found. Please try again later.🥺")
