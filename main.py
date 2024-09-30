@@ -104,10 +104,7 @@ def get_ai_response(user_message: str, chat_id: str) -> Optional[str]:
         )
         
         # Format the conversation history
-        conversation_history = [{
-            "role": "system",
-            "content": constant.assistantInstructions
-        }]
+        conversation_history = []
         if 'Items' in response and response['Items']:
             for item in reversed(response['Items']):  # Reverse to get chronological order
                 role = "assistant" if item['SenderUserID'] == adminid else "user"
