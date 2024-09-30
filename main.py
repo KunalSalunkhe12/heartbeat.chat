@@ -6,6 +6,7 @@ import boto3
 from boto3.dynamodb.conditions import Key
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
+import constant
 
 from typing import Optional
 import uuid
@@ -99,11 +100,16 @@ def get_ai_response(user_message: str, chat_id: str) -> Optional[str]:
         response = tableChat.query(
             KeyConditionExpression=Key('ChatID').eq(chat_id),
             ScanIndexForward=False,  # Sort in descending order (most recent first)
-            Limit=10  # Limit to last 10 messages
+            Limit=20  # Limit to last 10 messages
         )
         
         # Format the conversation history
-        conversation_history = []
+        conversation_history = [
+            {
+            "role": "system",
+            "content": constant.assistantInstructions
+        }
+        ]
         if 'Items' in response and response['Items']:
             for item in reversed(response['Items']):  # Reverse to get chronological order
                 role = "assistant" if item['SenderUserID'] == adminid else "user"
