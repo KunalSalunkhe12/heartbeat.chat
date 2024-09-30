@@ -51,21 +51,21 @@ def generate_dynamic_weights(user):
     # Create a message to send to OpenAI API
     print(f"User profile: {user}")
     prompt = f"Generate weights for the following user attributes based on user preferences:\n" \
-             f"Relationship Goals: {user.get('Relationship_Goals')}\n" \
-             f"Appearance: {user.get('Appearance')}\n" \
-             f"Location: {user.get('Location')}\n" \
-             f"Spirituality: {user.get('Spirituality')}\n" \
-             f"Personality Attributes: {user.get('Personality_Attributes')}\n" \
-             f"Age: {user.get('Age')}\n" \
-             f"Interests: {user.get('Interests')}\n" \
-             f"Identity and Preference: {user.get('Identity_and_Preference')}\n" \
-             f"Kids: {user.get('Kids')}\n" \
-             f"Smoking: {user.get('Smoking')}\n" \
-             f"Pets: {user.get('Pets')}\n" \
-             f"Career Goals: {user.get('Career_Goals')}\n" \
-             f"Annual Income: {user.get('Annual_Income')}\n" \
-             f"Willingness to Travel: {user.get('Willingness_to_Travel')}\n" \
-             f"Special Requests: {user.get('Special_Requests')}\n" \
+             f"Relationship Goals: {user['UserProfile']['relationship_goals']}\n" \
+             f"Appearance: {user['UserProfile']['appearance']}\n" \
+             f"Location: {user['UserProfile']['location']}\n" \
+             f"Spirituality: {user['UserProfile']['spirituality']}\n" \
+             f"Personality Attributes: {user['UserProfile']['personality_attributes']}\n" \
+             f"Age: {user['UserProfile']['age']}\n" \
+             f"Interests: {user['UserProfile']['interests']}\n" \
+             f"Identity and Preference: {user['UserProfile']['identity_and_preference']}\n" \
+             f"Kids: {user['UserProfile']['kids']}\n" \
+             f"Smoking: {user['UserProfile']['smoking']}\n" \
+             f"Pets: {user['UserProfile']['pets']}\n" \
+             f"Career Goals: {user['UserProfile']['career_goals']}\n" \
+             f"Annual Income: {user['UserProfile']['annual_income']}\n" \
+             f"Willingness to Travel: {user['UserProfile']['willingness_to_travel']}\n" \
+             f"Special Requests: {user['UserProfile']['special_requests']}\n" \
              f"Please output a JSON object with weights for each attribute, scaled between 0 and 1."
 
     print(f"Prompt: {prompt}")
