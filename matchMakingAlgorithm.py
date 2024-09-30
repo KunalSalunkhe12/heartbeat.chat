@@ -143,7 +143,7 @@ def give_explanation(user_id: str, matched_id: str, tableProfile):
         f"Profil 1{json.dumps(user)}\n"
         f"Profile 2: {json.dumps(matched_user)}\n"
         f"Explain the compatibility factors that led to their match."
-        "Only give a brief explanation of the key factors that make them compatible."
+        "Only give a brief explanation of the key factors that make them compatible. Dont mention user 1 or user 2 in the explanation."
     )
 
     all_messages_batch = [{
