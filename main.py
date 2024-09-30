@@ -159,6 +159,7 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
             if clean_message_content == "i want to get matched":
                 send_direct_message(sender_user_id, adminid, "Finding a match for you... May take a few seconds.")
                 res = matchMakingAlgorithm.run_matchmaking_algorithm(sender_user_id, tableProfile)
+                print(f"Matchmaking result: {res}")
 
                 matched_user_id = res.get('top_match')[0]
                 # explanation = matchMakingAlgorithm.give_explanation(sender_user_id, matched_user_id, tableProfile)
