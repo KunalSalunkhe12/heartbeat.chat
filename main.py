@@ -115,7 +115,7 @@ def get_ai_response(user_message: str, chat_id: str) -> Optional[str]:
         
 
         print(f"Conversation history: {conversation_history}")
-        conn = http.client.HTTPSConnection(schat_url)
+        conn = http.client.HTTPConnection(schat_url)
         payload = json.dumps({
             "user_message": user_message,
             "conversation_history": conversation_history
@@ -250,7 +250,7 @@ def process_direct_message(sender_user_id: str, receiver_user_id: str, chat_id: 
                     awaiting_chat_confirmation = False
                     return True
 
-        default_message = 'I am a matchmaker. Give me information about you so I can match you. If you want to get matched, say: I want to get matched.'
+        default_message = 'I am a matchmaker. Give me information about you so I can match you.'
         send_direct_message(sender_user_id, adminid, default_message)
         store_message_in_dynamodb(chat_id, generate_message_id(), default_message, adminid)
 
