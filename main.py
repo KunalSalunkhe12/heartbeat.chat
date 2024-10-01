@@ -115,7 +115,7 @@ def get_ai_response(user_message: str, chat_id: str) -> Optional[str]:
         
 
         print(f"Conversation history: {conversation_history}")
-        conn = http.client.HTTPConnection(schat_url)
+        conn = http.client.HTTPSConnection(schat_url)
         payload = json.dumps({
             "user_message": user_message,
             "conversation_history": conversation_history
