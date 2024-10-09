@@ -100,7 +100,7 @@ def get_ai_response(user_message: str, chat_id: str) -> Optional[str]:
         response = tableChat.query(
             KeyConditionExpression=Key('ChatID').eq(chat_id),
             ScanIndexForward=False,  # Sort in descending order (most recent first)
-            Limit=10  # Limit to last 10 messages
+            Limit=20  # Limit to last 10 messages
         )
         
         # Format the conversation history
