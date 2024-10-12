@@ -435,7 +435,7 @@ def create_chat_channel(channel_category_id: str, sender_user_id: str, matched_u
 def generate_message_id() -> str:
     return str(uuid.uuid4())
 
-
+# API Endpoints
 @app.post("/process_message")
 async def process_message(message: MessageRequest):
     try:
@@ -446,6 +446,16 @@ async def process_message(message: MessageRequest):
             raise HTTPException(status_code=500, detail="Message processing failed")
     except Exception as e:
         print(f"Error in process_message: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/get_messages")
+async def get_messages():
+    try:
+        messages = get_all_messages()
+        length = len(messages)
+        return {"length": length}
+    except Exception as e:
+        print(f"Error in get_messages: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/")
