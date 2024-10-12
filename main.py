@@ -12,6 +12,7 @@ from typing import Optional
 import uuid
 import os
 import matchMakingAlgorithm
+import metrics
 
 
 app = FastAPI()
@@ -451,7 +452,7 @@ async def process_message(message: MessageRequest):
 @app.get("/get_messages")
 async def get_messages():
     try:
-        messages = get_all_messages()
+        messages = metrics.get_all_messages()
         length = len(messages)
         return {"length": length}
     except Exception as e:
